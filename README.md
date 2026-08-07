@@ -1,37 +1,40 @@
-GPU Memory Stress Test & Bandwidth Benchmark. Fills GPU memory, optionally verifies data integrity, and measures CPU<->GPU transfer speed.
+# GPU Memory Stress Test & Bandwidth Benchmark
 
-options:
-  -h, --help            show this help message and exit
-  --passes N            number of test passes to run. More passes give a more stable result but take longer. (default:
-                        3)
-  --size SIZE           buffer size per pass, e.g. 512MiB, 1GiB, 2GiB. Default: use almost all free VRAM minus a small
-                        reserve.
-  --chunk-size SIZE     transfer chunk size, e.g. 64MiB, 128MiB, 256MiB, 512MiB. Larger chunks often give better PCIe
-                        throughput, but use more pinned host memory per buffer. (default: 128MiB)
-  --hash {sha256,blake2b,crc32,none}
-                        integrity hash mode. sha256: strong but slow; blake2b: often faster than sha256; crc32: very
-                        fast but non-cryptographic; none: disable verification for maximum bandwidth. (default:
-                        sha256)
-  --data {random,zeros}
-                        data fill mode. random: deterministic random data for memory stress/integrity; zeros: zero-
-                        filled data for near-pure PCIe bandwidth testing. (default: random)
-  --buffers N           number of pinned CPU buffers for the async pipeline, clamped to 1..8. More buffers may improve
-                        overlap between CPU work and PCIe DMA, but increase host RAM usage. (default: 3)
-  --no-warmup           disable preliminary CUDA/DMA warmup before measured passes. By default a short warmup is
-                        performed to make the first pass more representative.
+<p align="center">
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white" />
+  <img alt="GPU" src="https://img.shields.io/badge/GPU-CUDA-76B900?logo=nvidia&logoColor=white" />
+  <img alt="Test type" src="https://img.shields.io/badge/test-memory%20%7C%20bandwidth-orange" />
+</p>
 
-Examples:
-  # Pure PCIe bandwidth test, no verification:
-  python gpu_mem_test2_opt.py --passes 2 --size 2GiB --chunk-size 256MiB --data zeros --hash none
+A utility for stressing GPU memory, optionally verifying data integrity, and measuring CPU ↔ GPU transfer bandwidth.
 
-  # Fast memory integrity test:
-  python gpu_mem_test2_opt.py --passes 1 --chunk-size 128MiB --data random --hash crc32
+The tool can fill GPU memory with deterministic random data or zeros, stream it through pinned host buffers, and optionally verify transferred data using a hash. It is suitable for both PCIe bandwidth benchmarking and GPU memory error detection.
 
-  # Full deterministic random + SHA-256 stress/verify:
-  python gpu_mem_test2_opt.py --passes 3 --data random --hash sha256
+---
 
-Notes:
-  Size values accept B, KiB, MiB, GiB, TiB (e.g. 512MiB, 1GiB).
-  For maximum bandwidth use --data zeros --hash none.
-  For memory error detection use --data random with a hash.
-  Pinned host memory usage is roughly: buffers x chunk-size.
+## Features
+
+- Fills GPU memory with test data
+- Measures CPU ↔ GPU transfer speed
+- Optional data integrity verification
+- Multiple hash modes: `sha256`, `blake2b`, `crc32`, `none`
+- Deterministic random or zero-filled data patterns
+- Asynchronous pinned-memory transfer pipeline
+- Configurable chunk size and number of CPU buffers
+- Optional CUDA/DMA warmup before measured passes
+- Human-friendly size units: `B`, `KiB`, `MiB`, `GiB`, `TiB`
+
+---
+
+## Requirements
+
+- CUDA-capable GPU
+- Python 3.9 or newer
+- CUDA-capable Python runtime/environment
+- Enough free GPU memory for the selected buffer size
+- Enough host RAM for pinned buffers
+
+Pinned host memory usage is approximately:
+
+```text
+buffers × chunk-size
